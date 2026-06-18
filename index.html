@@ -37,9 +37,6 @@
                     <label class="block text-sm font-medium mb-1">Festival Bonuses (Yearly)</label>
                     <input type="number" id="festivalBonus" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
 
-                    <label class="block text-sm font-medium mb-1">Total Lunch Allowance (Yearly)</label>
-                    <input type="number" id="lunchAllowance" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
-
                     <div class="p-3 bg-blue-50 rounded mb-4">
                         <span class="block text-sm font-bold text-blue-800">Total Gross Income:</span>
                         <span id="totalGrossIncome" class="text-lg font-bold text-blue-900">৳ 0</span>
@@ -113,11 +110,10 @@
             const gender = document.getElementById('gender').value;
             const grossSalary = parseFloat(document.getElementById('grossSalary').value) || 0;
             const festivalBonus = parseFloat(document.getElementById('festivalBonus').value) || 0;
-            const lunchAllowance = parseFloat(document.getElementById('lunchAllowance').value) || 0;
             const currentInvestments = parseFloat(document.getElementById('currentInvestments').value) || 0;
             const sourceTaxPaid = parseFloat(document.getElementById('sourceTaxPaid').value) || 0;
 
-            const totalGross = grossSalary + festivalBonus + lunchAllowance;
+            const totalGross = grossSalary + festivalBonus;
             document.getElementById('totalGrossIncome').innerText = formatCurrency(totalGross);
 
             // 2. Exemption & Taxable Income
