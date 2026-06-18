@@ -172,7 +172,7 @@
 <header class="hdr">
     <div>
         <h1>Bangladesh Income Tax Calculator <span class="fy-tag" id="hdrFY">FY 2026-27</span></h1>
-        <p>Income Tax Act 2023 &middot; All figures in BDT (Bangladeshi Taka)</p>
+        <p> All figures in BDT (Bangladeshi Taka)</p>
     </div>
     <button class="btn-dl" onclick="downloadPDF()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -196,7 +196,7 @@
 
         <div class="field">
             <label>Full Name <span style="text-transform:none;font-weight:400;">(for report)</span></label>
-            <input type="text" id="taxpayerName" placeholder="e.g. Mohammad Rahman" oninput="calc()">
+            <input type="text" id="taxpayerName" placeholder="e.g. Full Name" oninput="calc()">
         </div>
         <div class="field">
             <label>TIN Number <span style="text-transform:none;font-weight:400;">(optional)</span></label>
@@ -216,7 +216,7 @@
         <div class="field">
             <label>Location <span style="text-transform:none;font-weight:400;">(for min. tax)</span></label>
             <select id="location" oninput="calc()">
-                <option value="DHAKA_CTG_CITY_CORP">Dhaka / Chittagong City Corp.</option>
+                <option value="DHAKA_CTG_CITY_CORP">Dhaka / Chittagong City Corporation</option>
                 <option value="OTHER_CITY_CORP">Other City Corporation</option>
                 <option value="DISTRICT_HQ_POURASHAVA">District HQ / Pourashava</option>
                 <option value="OTHER">Other Areas</option>
@@ -350,8 +350,8 @@
 </div><!-- /right -->
 </div><!-- /grid -->
 <div class="pgfoot">
-    Income Tax Act 2023 &middot; Finance Act provisions &middot; Last config update: FY 2026-27
-    &middot; For official IT return filing, consult a certified tax consultant.
+Developed by Md. Niaz Mahmud Shihab &middot; 2026 &middot; Last config update: FY 2026-27
+    &middot; For official income tax return filing, consult a certified tax consultant.
 </div>
 </div><!-- /wrap -->
 
@@ -621,7 +621,7 @@ function downloadPDF() {
     doc.setLineWidth(0.2);
 
     T('BANGLADESH INCOME TAX ANALYSIS REPORT', ML, 12, { sz: 14, style: 'bold', clr: [15, 30, 80] });
-    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR + '   |   Income Tax Act 2023   |   NBR Official Rules', ML, 19, { sz: 9, clr: [60, 90, 150] });
+    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR + ', ML, 19, { sz: 9, clr: [60, 90, 150] });
 
     const name   = $('taxpayerName').value.trim() || 'N/A';
     const tin    = $('taxpayerTIN').value.trim()  || 'N/A';
