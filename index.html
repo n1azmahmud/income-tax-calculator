@@ -621,7 +621,7 @@ function downloadPDF() {
     doc.setLineWidth(0.2);
 
     T('BANGLADESH INCOME TAX ANALYSIS REPORT', ML, 12, { sz: 14, style: 'bold', clr: [15, 30, 80] });
-    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR + ', ML, 19, { sz: 9, clr: [60, 90, 150] });
+    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR, ML, 19, { sz: 9, clr: [60, 90, 150] });
 
     const name   = $('taxpayerName').value.trim() || 'N/A';
     const tin    = $('taxpayerTIN').value.trim()  || 'N/A';
