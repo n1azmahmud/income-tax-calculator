@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangladesh Income Tax Calculator (2026-27)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .row-item { display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 0.5rem; }
+        .row-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .font-semibold { font-weight: 600; }
+        .text-blue { color: #2563eb; }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Income Tax Calculator with Investment Plan (2026-27)</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- INPUT SECTION -->
+            <div class="col-span-1">
+                <div class="card border-t-4 border-blue-600">
+                    <h2 class="text-xl font-bold mb-4">1. ENTER YOUR DATA HERE</h2>
+                    
+                    <label class="block text-sm font-medium mb-1">Gender</label>
+                    <select id="gender" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="calculateTax()">
+                        <option value="male">General Male</option>
+                        <option value="female">General Female</option>
+                    </select>
+
+                    <label class="block text-sm font-medium mb-1">Fixed Gross Salary (Yearly)</label>
+                    <input type="number" id="grossSalary" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+
+                    <label class="block text-sm font-medium mb-1">Festival Bonuses (Yearly)</label>
+                    <input type="number" id="festivalBonus" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+
+                    <label class="block text-sm font-medium mb-1">Total Lunch Allowance (Yearly)</label>
+                    <input type="number" id="lunchAllowance" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+
+                    <div class="p-3 bg-blue-50 rounded mb-4">
+                        <span class="block text-sm font-bold text-blue-800">Total Gross Income:</span>
+                        <span id="totalGrossIncome" class="text-lg font-bold text-blue-900">৳ 0</span>
+                    </div>
+
+                    <label class="block text-sm font-medium mb-1">Current Eligible Investments</label>
+                    <input type="number" id="currentInvestments" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+
+                    <label class="block text-sm font-medium mb-1">Total Source Tax Paid (TDS/AIT)</label>
+                    <input type="number" id="sourceTaxPaid" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+                </div>
+            </div>
+
+            <!-- RESULTS SECTION -->
+            <div class="col-span-1 md:col-span-2">
+                
+                <!-- Section 2 -->
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">2. EXEMPTION & TAXABLE INCOME</h2>
+                    <div class="row-item"><span>Max Allowed Exemption Hard Cap</span> <span id="exemptionHardCap">৳ 450,000</span></div>
+                    <div class="row-item"><span>1/3rd of Gross Income</span> <span id="oneThirdGross">৳ 0</span></div>
+                    <div class="row-item font-semibold text-blue"><span>Actual Exemption (Lower of above)</span> <span id="actualExemption">৳ 0</span></div>
+                    <div class="row-item font-bold text-lg mt-2 pt-2 border-t-2"><span>Net Taxable Income</span> <span id="netTaxableIncome">৳ 0</span></div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">3. BASE TAX CALCULATION</h2>
+                    <div class="row-item"><span>Tax-Free Threshold</span> <span id="taxFreeThreshold">৳ 0</span></div>
+                    <div class="row-item"><span>10% Slab (Next 300k)</span> <span id="tax10">৳ 0</span></div>
+                    <div class="row-item"><span>15% Slab (Next 400k)</span> <span id="tax15">৳ 0</span></div>
+                    <div class="row-item"><span>20% Slab (Next 500k)</span> <span id="tax20">৳ 0</span></div>
+                    <div class="row-item"><span>25% Slab (Next 2M)</span> <span id="tax25">৳ 0</span></div>
+                    <div class="row-item"><span>30% Slab (Rest)</span> <span id="tax30">৳ 0</span></div>
+                    <div class="row-item font-bold text-lg mt-2 pt-2 border-t-2"><span>Total Base Tax Liability</span> <span id="baseTaxLiability">৳ 0</span></div>
+                </div>
+
+                <!-- Section 4 -->
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">4. REBATE CALCULATION</h2>
+                    <div class="row-item"><span>Option A: 3% of Taxable Income</span> <span id="optA">৳ 0</span></div>
+                    <div class="row-item"><span>Option B: 10% of Actual Investment</span> <span id="optB">৳ 0</span></div>
+                    <div class="row-item"><span>Option C: Maximum Hard Cap</span> <span id="optC">৳ 750,000</span></div>
+                    <div class="row-item font-semibold text-blue mt-2 pt-2 border-t-2"><span>Actual Rebate Applicable (Lowest of A, B, C)</span> <span id="actualRebate">৳ 0</span></div>
+                </div>
+
+                <!-- Section 5 -->
+                <div class="card border-t-4 border-green-500 bg-green-50">
+                    <h2 class="text-xl font-bold mb-4 text-green-800">5. FINAL OUTCOME & ACTION PLAN</h2>
+                    <div class="row-item font-semibold text-gray-700"><span>Net Tax Payable</span> <span id="netTaxPayable">৳ 0</span></div>
+                    <div class="row-item font-semibold text-gray-700"><span>Less: Source Tax Paid</span> <span id="displaySourceTaxPaid">৳ 0</span></div>
+                    
+                    <div class="row-item font-bold text-xl mt-2 pt-2 border-t-2 border-green-200" id="finalStatusRow">
+                        <span id="finalStatusLabel" class="text-red-600">Net Tax Due to Pay</span> 
+                        <span id="finalStatusAmount" class="text-red-600">৳ 0</span>
+                    </div>
+
+                    <div class="row-item mt-6 text-green-800"><span>Target Total Investment for Max Rebate</span> <span id="targetInvestment">৳ 0</span></div>
+                    <div class="row-item font-semibold text-green-900"><span>Remaining Investment Needed</span> <span id="remainingInvestment">৳ 0</span></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formatCurrency = (num) => '৳ ' + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+        function calculateTax() {
+            // 1. Get Inputs
+            const gender = document.getElementById('gender').value;
+            const grossSalary = parseFloat(document.getElementById('grossSalary').value) || 0;
+            const festivalBonus = parseFloat(document.getElementById('festivalBonus').value) || 0;
+            const lunchAllowance = parseFloat(document.getElementById('lunchAllowance').value) || 0;
+            const currentInvestments = parseFloat(document.getElementById('currentInvestments').value) || 0;
+            const sourceTaxPaid = parseFloat(document.getElementById('sourceTaxPaid').value) || 0;
+
+            const totalGross = grossSalary + festivalBonus + lunchAllowance;
+            document.getElementById('totalGrossIncome').innerText = formatCurrency(totalGross);
+
+            // 2. Exemption & Taxable Income
+            const maxExemptionCap = 450000; 
+            const oneThirdGross = totalGross / 3;
+            const actualExemption = Math.min(maxExemptionCap, oneThirdGross);
+            const netTaxableIncome = Math.max(0, totalGross - actualExemption);
+
+            document.getElementById('exemptionHardCap').innerText = formatCurrency(maxExemptionCap);
+            document.getElementById('oneThirdGross').innerText = formatCurrency(oneThirdGross);
+            document.getElementById('actualExemption').innerText = formatCurrency(actualExemption);
+            document.getElementById('netTaxableIncome').innerText = formatCurrency(netTaxableIncome);
+
+            // 3. Base Tax Calculation
+            const threshold = gender === 'female' ? 425000 : 375000;
+            document.getElementById('taxFreeThreshold').innerText = formatCurrency(threshold);
+
+            let remainingTaxable = Math.max(0, netTaxableIncome - threshold);
+            let tax10 = 0, tax15 = 0, tax20 = 0, tax25 = 0, tax30 = 0;
+
+            if (remainingTaxable > 0) {
+                let slab = Math.min(remainingTaxable, 300000);
+                tax10 = slab * 0.10;
+                remainingTaxable -= slab;
+            }
+            if (remainingTaxable > 0) {
+                let slab = Math.min(remainingTaxable, 400000);
+                tax15 = slab * 0.15;
+                remainingTaxable -= slab;
+            }
+            if (remainingTaxable > 0) {
+                let slab = Math.min(remainingTaxable, 500000);
+                tax20 = slab * 0.20;
+                remainingTaxable -= slab;
+            }
+            if (remainingTaxable > 0) {
+                let slab = Math.min(remainingTaxable, 2000000);
+                tax25 = slab * 0.25;
+                remainingTaxable -= slab;
+            }
+            if (remainingTaxable > 0) {
+                tax30 = remainingTaxable * 0.30;
+            }
+
+            const totalBaseTax = tax10 + tax15 + tax20 + tax25 + tax30;
+
+            document.getElementById('tax10').innerText = formatCurrency(tax10);
+            document.getElementById('tax15').innerText = formatCurrency(tax15);
+            document.getElementById('tax20').innerText = formatCurrency(tax20);
+            document.getElementById('tax25').innerText = formatCurrency(tax25);
+            document.getElementById('tax30').innerText = formatCurrency(tax30);
+            document.getElementById('baseTaxLiability').innerText = formatCurrency(totalBaseTax);
+
+            // 4. Rebate Calculation
+            const optA = netTaxableIncome * 0.03;
+            const optB = currentInvestments * 0.10;
+            const optC = 750000;
+            const actualRebate = Math.min(optA, optB, optC);
+
+            document.getElementById('optA').innerText = formatCurrency(optA);
+            document.getElementById('optB').innerText = formatCurrency(optB);
+            document.getElementById('optC').innerText = formatCurrency(optC);
+            document.getElementById('actualRebate').innerText = formatCurrency(actualRebate);
+
+            // 5. Final Outcome & Action Plan
+            const netTaxPayable = Math.max(0, totalBaseTax - actualRebate);
+            const finalTaxDifference = netTaxPayable - sourceTaxPaid;
+            
+            document.getElementById('netTaxPayable').innerText = formatCurrency(netTaxPayable);
+            document.getElementById('displaySourceTaxPaid').innerText = formatCurrency(sourceTaxPaid);
+
+            const statusLabel = document.getElementById('finalStatusLabel');
+            const statusAmount = document.getElementById('finalStatusAmount');
+
+            if (finalTaxDifference > 0) {
+                statusLabel.innerText = "Net Tax Due to Pay";
+                statusLabel.className = "text-red-600";
+                statusAmount.className = "text-red-600";
+                statusAmount.innerText = formatCurrency(finalTaxDifference);
+            } else if (finalTaxDifference < 0) {
+                statusLabel.innerText = "Total Source Tax Refund";
+                statusLabel.className = "text-blue-600";
+                statusAmount.className = "text-blue-600";
+                statusAmount.innerText = formatCurrency(Math.abs(finalTaxDifference));
+            } else {
+                statusLabel.innerText = "Tax fully settled (No Due/Refund)";
+                statusLabel.className = "text-green-600";
+                statusAmount.className = "text-green-600";
+                statusAmount.innerText = formatCurrency(0);
+            }
+
+            // Investment calculations
+            const maxPossibleRebate = Math.min(optA, optC);
+            const targetInvestment = maxPossibleRebate / 0.10; 
+            const remainingInvestment = Math.max(0, targetInvestment - currentInvestments);
+
+            document.getElementById('targetInvestment').innerText = formatCurrency(targetInvestment);
+            document.getElementById('remainingInvestment').innerText = formatCurrency(remainingInvestment);
+        }
+
+        // Initialize calculation on page load
+        window.onload = calculateTax;
+    </script>
+</body>
+</html>
