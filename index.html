@@ -3,219 +3,866 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bangladesh Income Tax Calculator (2026-27)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Bangladesh Income Tax Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
-        .row-item { display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 0.5rem; }
-        .row-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .font-semibold { font-weight: 600; }
-        .text-blue { color: #2563eb; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:      #f2f4f7;
+            --card:    #ffffff;
+            --border:  #d6dbe1;
+            --bdrk:    #adb5bd;
+            --text:    #1c1c2e;
+            --mid:     #495057;
+            --muted:   #868e96;
+            --blue:    #1d4ed8;
+            --bluelt:  #eff6ff;
+            --green:   #16a34a;
+            --red:     #dc2626;
+            --amber:   #d97706;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        /* ── HEADER ───────────────────────────────────────────── */
+        .hdr {
+            background: #fff;
+            border-bottom: 2px solid var(--blue);
+            padding: 14px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .hdr h1  { font-size: 16px; font-weight: 700; color: var(--text); }
+        .hdr p   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .fy-tag  {
+            display: inline-block;
+            background: var(--bluelt); color: var(--blue);
+            font-size: 11px; font-weight: 600;
+            padding: 2px 8px; border-radius: 4px;
+            border: 1px solid #bfdbfe; margin-left: 6px;
+        }
+        .btn-dl {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--blue); color: #fff;
+            font-size: 12px; font-weight: 600;
+            padding: 8px 16px; border-radius: 6px;
+            border: none; cursor: pointer;
+            font-family: inherit; transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .btn-dl:hover { background: #1e40af; }
+
+        /* ── LAYOUT ───────────────────────────────────────────── */
+        .wrap { max-width: 1160px; margin: 0 auto; padding: 20px 16px; }
+        .grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; }
+        @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+        /* ── CARD ─────────────────────────────────────────────── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        /* ── SECTION TITLE ────────────────────────────────────── */
+        .stitle {
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--mid);
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 9px; margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .stitle .ref { font-size: 9px; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
+
+        /* ── INPUTS ───────────────────────────────────────────── */
+        .field { margin-bottom: 10px; }
+        .field label {
+            display: block; font-size: 10px; font-weight: 600;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.4px; margin-bottom: 4px;
+        }
+        .field input, .field select {
+            width: 100%; padding: 7px 10px;
+            border: 1px solid var(--border); border-radius: 5px;
+            font-size: 13px; color: var(--text);
+            background: #fafbfc; font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        .field input:focus, .field select:focus {
+            outline: none; border-color: var(--blue); background: #fff;
+        }
+        .sym { position: relative; }
+        .sym .s { position: absolute; left: 9px; bottom: 8px; color: var(--muted); pointer-events: none; font-size: 12px; }
+        .sym input { padding-left: 20px; }
+
+        .tot-box {
+            background: var(--bluelt); border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 9px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 4px;
+        }
+        .tot-box .tl { font-size: 11px; font-weight: 600; color: #1e40af; }
+        .tot-box .tv { font-size: 16px; font-weight: 800; color: #1e3a8a; }
+
+        /* ── RESULT ROWS ──────────────────────────────────────── */
+        .r {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0; border-bottom: 1px solid #f0f1f2; font-size: 12px;
+        }
+        .r:last-child { border-bottom: none; }
+        .r .l { color: var(--mid); }
+        .r .v { font-weight: 600; }
+        .r.hi { background: var(--bluelt); border-radius: 5px; padding: 5px 7px; margin: 2px -3px; border-bottom: none; }
+        .r.hi .l { color: var(--blue); font-weight: 600; }
+        .r.hi .v { color: var(--blue); font-weight: 700; }
+        .r.tot {
+            border-top: 1.5px solid var(--bdrk); margin-top: 6px;
+            padding-top: 8px; border-bottom: none;
+        }
+        .r.tot .l { font-weight: 700; font-size: 13px; color: var(--text); }
+        .r.tot .v { font-weight: 800; font-size: 15px; }
+
+        /* ── STATUS ───────────────────────────────────────────── */
+        .scard {
+            border-radius: 7px; padding: 18px; text-align: center;
+            margin-bottom: 14px; border: 1.5px solid;
+        }
+        .sl  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .sa  { font-size: 32px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+        .sn  { font-size: 11px; opacity: 0.7; }
+        .due     { background: #fff5f5; border-color: #fca5a5; }
+        .due  .sl, .due  .sa { color: var(--red); }
+        .ref { background: #eff6ff; border-color: #93c5fd; }
+        .ref .sl, .ref .sa { color: var(--blue); }
+        .ok  { background: #f0fdf4; border-color: #86efac; }
+        .ok  .sl, .ok  .sa { color: var(--green); }
+
+        /* ── MIN TAX NOTICE ───────────────────────────────────── */
+        .mnotice {
+            background: #fffbeb; border: 1px solid #fbbf24;
+            border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; display: none;
+        }
+        .mnotice b { font-size: 11px; color: #92400e; display: block; margin-bottom: 2px; }
+        .mnotice p { font-size: 11px; color: #78350f; }
+
+        /* ── INSTRUMENTS ──────────────────────────────────────── */
+        .inst-wrap { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 11px 12px; margin-top: 12px; }
+        .inst-wrap .ih { font-size: 10px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+        .inst-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+        .inst-item { font-size: 10px; color: #166534; display: flex; align-items: center; gap: 4px; }
+
+        /* ── FOOTER ───────────────────────────────────────────── */
+        .pgfoot { text-align: center; color: var(--muted); font-size: 10px; padding: 14px 0 20px; }
     </style>
 </head>
-<body class="text-gray-800 p-4 md:p-8">
+<body>
 
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Income Tax Calculator with Investment Plan (2026-27)</h1>
+<!-- HEADER -->
+<header class="hdr">
+    <div>
+        <h1>Bangladesh Income Tax Calculator <span class="fy-tag" id="hdrFY">FY 2026-27</span></h1>
+        <p>Income Tax Act 2023 &middot; All figures in BDT (Bangladeshi Taka)</p>
+    </div>
+    <button class="btn-dl" onclick="downloadPDF()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Tax Report (PDF)
+    </button>
+</header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- INPUT SECTION -->
-            <div class="col-span-1">
-                <div class="card border-t-4 border-blue-600">
-                    <h2 class="text-xl font-bold mb-4">1. ENTER YOUR DATA HERE</h2>
-                    
-                    <label class="block text-sm font-medium mb-1">Gender</label>
-                    <select id="gender" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="calculateTax()">
-                        <option value="male">General Male</option>
-                        <option value="female">General Female</option>
-                    </select>
+<div class="wrap">
+<div class="grid">
 
-                    <label class="block text-sm font-medium mb-1">Fixed Gross Salary (Yearly)</label>
-                    <input type="number" id="grossSalary" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+<!-- ════════════════════════════════
+     LEFT — INPUTS
+════════════════════════════════ -->
+<div>
 
-                    <label class="block text-sm font-medium mb-1">Festival Bonuses (Yearly)</label>
-                    <input type="number" id="festivalBonus" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
+    <!-- 1. Taxpayer -->
+    <div class="card">
+        <div class="stitle">1. Taxpayer Details</div>
 
-                    <div class="p-3 bg-blue-50 rounded mb-4">
-                        <span class="block text-sm font-bold text-blue-800">Total Gross Income:</span>
-                        <span id="totalGrossIncome" class="text-lg font-bold text-blue-900">৳ 0</span>
-                    </div>
-
-                    <label class="block text-sm font-medium mb-1">Current Eligible Investments</label>
-                    <input type="number" id="currentInvestments" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
-
-                    <label class="block text-sm font-medium mb-1">Total Source Tax Paid (TDS/AIT)</label>
-                    <input type="number" id="sourceTaxPaid" class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0" oninput="calculateTax()">
-                </div>
-            </div>
-
-            <!-- RESULTS SECTION -->
-            <div class="col-span-1 md:col-span-2">
-                
-                <!-- Section 2 -->
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">2. EXEMPTION & TAXABLE INCOME</h2>
-                    <div class="row-item"><span>Max Allowed Exemption Hard Cap</span> <span id="exemptionHardCap">৳ 450,000</span></div>
-                    <div class="row-item"><span>1/3rd of Gross Income</span> <span id="oneThirdGross">৳ 0</span></div>
-                    <div class="row-item font-semibold text-blue"><span>Actual Exemption (Lower of above)</span> <span id="actualExemption">৳ 0</span></div>
-                    <div class="row-item font-bold text-lg mt-2 pt-2 border-t-2"><span>Net Taxable Income</span> <span id="netTaxableIncome">৳ 0</span></div>
-                </div>
-
-                <!-- Section 3 -->
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">3. BASE TAX CALCULATION</h2>
-                    <div class="row-item"><span>Tax-Free Threshold</span> <span id="taxFreeThreshold">৳ 0</span></div>
-                    <div class="row-item"><span>10% Slab (Next 300k)</span> <span id="tax10">৳ 0</span></div>
-                    <div class="row-item"><span>15% Slab (Next 400k)</span> <span id="tax15">৳ 0</span></div>
-                    <div class="row-item"><span>20% Slab (Next 500k)</span> <span id="tax20">৳ 0</span></div>
-                    <div class="row-item"><span>25% Slab (Next 2M)</span> <span id="tax25">৳ 0</span></div>
-                    <div class="row-item"><span>30% Slab (Rest)</span> <span id="tax30">৳ 0</span></div>
-                    <div class="row-item font-bold text-lg mt-2 pt-2 border-t-2"><span>Total Base Tax Liability</span> <span id="baseTaxLiability">৳ 0</span></div>
-                </div>
-
-                <!-- Section 4 -->
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">4. REBATE CALCULATION</h2>
-                    <div class="row-item"><span>Option A: 3% of Taxable Income</span> <span id="optA">৳ 0</span></div>
-                    <div class="row-item"><span>Option B: 10% of Actual Investment</span> <span id="optB">৳ 0</span></div>
-                    <div class="row-item"><span>Option C: Maximum Hard Cap</span> <span id="optC">৳ 750,000</span></div>
-                    <div class="row-item font-semibold text-blue mt-2 pt-2 border-t-2"><span>Actual Rebate Applicable (Lowest of A, B, C)</span> <span id="actualRebate">৳ 0</span></div>
-                </div>
-
-                <!-- Section 5 -->
-                <div class="card border-t-4 border-green-500 bg-green-50">
-                    <h2 class="text-xl font-bold mb-4 text-green-800">5. FINAL OUTCOME & ACTION PLAN</h2>
-                    <div class="row-item font-semibold text-gray-700"><span>Net Tax Payable</span> <span id="netTaxPayable">৳ 0</span></div>
-                    <div class="row-item font-semibold text-gray-700"><span>Less: Source Tax Paid</span> <span id="displaySourceTaxPaid">৳ 0</span></div>
-                    
-                    <div class="row-item font-bold text-xl mt-2 pt-2 border-t-2 border-green-200" id="finalStatusRow">
-                        <span id="finalStatusLabel" class="text-red-600">Net Tax Due to Pay</span> 
-                        <span id="finalStatusAmount" class="text-red-600">৳ 0</span>
-                    </div>
-
-                    <div class="row-item mt-6 text-green-800"><span>Target Total Investment for Max Rebate</span> <span id="targetInvestment">৳ 0</span></div>
-                    <div class="row-item font-semibold text-green-900"><span>Remaining Investment Needed</span> <span id="remainingInvestment">৳ 0</span></div>
-                </div>
-
-            </div>
+        <div class="field">
+            <label>Full Name <span style="text-transform:none;font-weight:400;">(for report)</span></label>
+            <input type="text" id="taxpayerName" placeholder="e.g. Mohammad Rahman" oninput="calc()">
+        </div>
+        <div class="field">
+            <label>TIN Number <span style="text-transform:none;font-weight:400;">(optional)</span></label>
+            <input type="text" id="taxpayerTIN" placeholder="12-digit TIN" oninput="calc()">
+        </div>
+        <div class="field">
+            <label>Taxpayer Category</label>
+            <select id="gender" oninput="calc()">
+                <option value="MALE">General Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="THIRD_GENDER">Third Gender</option>
+                <option value="DISABLED">Person with Disability</option>
+                <option value="FREEDOM_FIGHTER">Freedom Fighter / Dependent</option>
+                <option value="AGED_65_PLUS">Senior Citizen (Age 65+)</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Location <span style="text-transform:none;font-weight:400;">(for min. tax)</span></label>
+            <select id="location" oninput="calc()">
+                <option value="DHAKA_CTG_CITY_CORP">Dhaka / Chittagong City Corp.</option>
+                <option value="OTHER_CITY_CORP">Other City Corporation</option>
+                <option value="DISTRICT_HQ_POURASHAVA">District HQ / Pourashava</option>
+                <option value="OTHER">Other Areas</option>
+            </select>
         </div>
     </div>
 
-    <script>
-        const formatCurrency = (num) => '৳ ' + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    <!-- 2. Income -->
+    <div class="card">
+        <div class="stitle">2. Income Details (Yearly)</div>
 
-        function calculateTax() {
-            // 1. Get Inputs
-            const gender = document.getElementById('gender').value;
-            const grossSalary = parseFloat(document.getElementById('grossSalary').value) || 0;
-            const festivalBonus = parseFloat(document.getElementById('festivalBonus').value) || 0;
-            const currentInvestments = parseFloat(document.getElementById('currentInvestments').value) || 0;
-            const sourceTaxPaid = parseFloat(document.getElementById('sourceTaxPaid').value) || 0;
+        <div class="field sym">
+            <label>Fixed Gross Salary</label>
+            <span class="s">&#2547;</span>
+            <input type="number" id="grossSalary" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="field sym">
+            <label>Festival Bonuses (Total)</label>
+            <span class="s">&#2547;</span>
+            <input type="number" id="festivalBonus" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="field sym">
+            <label>Other Taxable Income</label>
+            <span class="s">&#2547;</span>
+            <input type="number" id="otherIncome" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="tot-box">
+            <span class="tl">Total Gross Income</span>
+            <span class="tv" id="totalGross">&#2547; 0</span>
+        </div>
+    </div>
 
-            const totalGross = grossSalary + festivalBonus;
-            document.getElementById('totalGrossIncome').innerText = formatCurrency(totalGross);
+    <!-- 3. Investments & TDS -->
+    <div class="card">
+        <div class="stitle">3. Investments &amp; Tax Paid</div>
 
-            // 2. Exemption & Taxable Income
-            const maxExemptionCap = 500000; 
-            const oneThirdGross = totalGross / 3;
-            const actualExemption = Math.min(maxExemptionCap, oneThirdGross);
-            const netTaxableIncome = Math.max(0, totalGross - actualExemption);
+        <div class="field sym">
+            <label>Eligible Investments Made</label>
+            <span class="s">&#2547;</span>
+            <input type="number" id="currentInv" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="field sym">
+            <label>Source Tax Paid (TDS / AIT)</label>
+            <span class="s">&#2547;</span>
+            <input type="number" id="sourceTax" value="0" min="0" oninput="calc()">
+        </div>
+    </div>
 
-            document.getElementById('exemptionHardCap').innerText = formatCurrency(maxExemptionCap);
-            document.getElementById('oneThirdGross').innerText = formatCurrency(oneThirdGross);
-            document.getElementById('actualExemption').innerText = formatCurrency(actualExemption);
-            document.getElementById('netTaxableIncome').innerText = formatCurrency(netTaxableIncome);
+</div><!-- /left -->
 
-            // 3. Base Tax Calculation
-            const threshold = gender === 'female' ? 425000 : 375000;
-            document.getElementById('taxFreeThreshold').innerText = formatCurrency(threshold);
 
-            let remainingTaxable = Math.max(0, netTaxableIncome - threshold);
-            let tax10 = 0, tax15 = 0, tax20 = 0, tax25 = 0, tax30 = 0;
+<!-- ════════════════════════════════
+     RIGHT — RESULTS
+════════════════════════════════ -->
+<div>
 
-            if (remainingTaxable > 0) {
-                let slab = Math.min(remainingTaxable, 300000);
-                tax10 = slab * 0.10;
-                remainingTaxable -= slab;
+    <!-- A. Exemption -->
+    <div class="card">
+        <div class="stitle">
+            A. Exemption &amp; Taxable Income
+            <span class="ref">6th Schedule, Part-A</span>
+        </div>
+        <div class="r"><span class="l">Salary Exemption Hard Cap</span>           <span class="v" id="rExCap">&#2547; 0</span></div>
+        <div class="r"><span class="l">1/3rd of Employment Income (Calculated)</span> <span class="v" id="rOneThird">&#2547; 0</span></div>
+        <div class="r hi"><span class="l">Actual Exemption Applied (Lower of above)</span> <span class="v" id="rExemption">&#2547; 0</span></div>
+        <div class="r tot"><span class="l">Net Taxable Income</span>              <span class="v" id="rTaxable">&#2547; 0</span></div>
+    </div>
+
+    <!-- B. Tax Slabs -->
+    <div class="card">
+        <div class="stitle">
+            B. Base Tax Calculation
+            <span class="ref">Third Schedule, Finance Act</span>
+        </div>
+        <div class="r"><span class="l">0% &mdash; Tax-Free Threshold</span>      <span class="v" style="color:var(--green);" id="rThreshold">&#2547; 0</span></div>
+        <div id="slabRows"></div>
+        <div class="r tot"><span class="l">Total Base Tax Liability</span>        <span class="v" style="color:var(--red);" id="rBaseTax">&#2547; 0</span></div>
+    </div>
+
+    <!-- C + D: two-col -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+
+        <div class="card" style="margin-bottom:0;">
+            <div class="stitle">C. Investment Rebate <span class="ref">Sec. 78, ITA 2023</span></div>
+            <div class="r"><span class="l">Option A &mdash; 3% of taxable income</span>  <span class="v" id="rOptA">&#2547; 0</span></div>
+            <div class="r"><span class="l">Option B &mdash; 10% of investments</span>    <span class="v" id="rOptB">&#2547; 0</span></div>
+            <div class="r"><span class="l">Option C &mdash; Statutory cap</span>         <span class="v" id="rOptC">&#2547; 0</span></div>
+            <div class="r tot"><span class="l" style="color:var(--blue);">Rebate Applied</span><span class="v" style="color:var(--blue);" id="rRebate">&#2547; 0</span></div>
+        </div>
+
+        <div class="card" style="margin-bottom:0;">
+            <div class="stitle">D. Tax Summary</div>
+            <div class="r"><span class="l">Base Tax Liability</span>   <span class="v" id="sumBase">&#2547; 0</span></div>
+            <div class="r"><span class="l">Less: Rebate</span>          <span class="v" style="color:var(--green);" id="sumRebate">&#2547; 0</span></div>
+            <div class="r"><span class="l">Net Tax Payable</span>       <span class="v" id="rNetTax">&#2547; 0</span></div>
+            <div class="r tot"><span class="l">Less: TDS Paid</span>    <span class="v" id="rTDS">&#2547; 0</span></div>
+        </div>
+
+    </div>
+
+    <!-- Min Tax Notice -->
+    <div class="mnotice" id="minNotice">
+        <b>Minimum Tax Rule Applies (Section 163)</b>
+        <p id="minMsg"></p>
+    </div>
+
+    <!-- Final Status -->
+    <div class="scard due" id="statusCard">
+        <div class="sl" id="sLabel">Net Tax Due to Pay</div>
+        <div class="sa" id="sAmount">&#2547; 0</div>
+        <div class="sn" id="sNote">Enter your income details above.</div>
+    </div>
+
+    <!-- G. Investment Plan -->
+    <div class="card">
+        <div class="stitle">
+            E. Investment Action Plan
+            <span class="ref">6th Schedule, Part-B</span>
+        </div>
+        <div class="r"><span class="l">Max Eligible Investment (30% of taxable)</span> <span class="v" id="rMaxElig">&#2547; 0</span></div>
+        <div class="r"><span class="l">Target Investment for Full Rebate</span>       <span class="v" style="color:var(--green);" id="rTarget">&#2547; 0</span></div>
+        <div class="r"><span class="l" style="font-weight:700;color:var(--text);">Additional Investment Needed</span> <span class="v" style="color:var(--amber);" id="rStillNeed">&#2547; 0</span></div>
+        <div class="r" style="border-bottom:none;"><span class="l">Tax Saving by Investing Remaining</span> <span class="v" style="color:var(--green);" id="rSaving">&#2547; 0</span></div>
+
+        <div class="inst-wrap">
+            <div class="ih">Eligible Investment Instruments</div>
+            <div class="inst-grid" id="instList"></div>
+        </div>
+    </div>
+
+</div><!-- /right -->
+</div><!-- /grid -->
+<div class="pgfoot">
+    Income Tax Act 2023 &middot; Finance Act provisions &middot; Last config update: FY 2026-27
+    &middot; For official IT return filing, consult a certified tax consultant.
+</div>
+</div><!-- /wrap -->
+
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║       NBR TAX CONFIGURATION  —  FISCAL YEAR 2026-27                    ║
+// ╠══════════════════════════════════════════════════════════════════════════╣
+// ║  UPDATE THIS SECTION ONLY when NBR issues a new circular/Finance Act.  ║
+// ║  Every value is labeled with its legal source reference.                ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const TAX_CONFIG = {
+
+    // ── FISCAL YEAR ──────────────────────────────────────────────────────────
+    FISCAL_YEAR:    "2026-27",        // [NBR Label] e.g. "2027-28" for next year
+    EFFECTIVE_DATE: "01 July 2026",   // [NBR Label] Start of assessment year
+
+    // ── TAX-FREE THRESHOLDS (Annual, BDT) ────────────────────────────────────
+    // Source: Finance Act — Para 1, Part 1, Third Schedule
+    THRESHOLD: {
+        MALE:             375000,   // [NBR] General Male                    — Tk 3,75,000
+        FEMALE:           425000,   // [NBR] Female                          — Tk 4,25,000
+        THIRD_GENDER:     475000,   // [NBR] Third Gender                    — Tk 4,75,000
+        DISABLED:         475000,   // [NBR] Person with Disability          — Tk 4,75,000
+        FREEDOM_FIGHTER:  525000,   // [NBR] Freedom Fighter / Dependent     — Tk 5,25,000
+        AGED_65_PLUS:     425000,   // [NBR] Senior Citizen (65+)            — Tk 4,25,000
+    },
+
+    // ── SALARY EXEMPTION ─────────────────────────────────────────────────────
+    // Source: Sixth Schedule (Part-A), ITA 2023
+    // Lower of (FRACTION x salary+bonus) OR MAX_CAP is exempt
+    SALARY_EXEMPTION: {
+        FRACTION: 1 / 3,   // [NBR] 1/3rd of employment income is exempt
+        MAX_CAP:  500000,  // [NBR] Maximum exemption cap           — Tk 4,50,000
+    },
+
+    // ── PROGRESSIVE TAX SLABS ────────────────────────────────────────────────
+    // Source: Finance Act — Para 2, Part 1, Third Schedule
+    // Last slab MUST have upTo: Infinity
+    TAX_SLABS: [
+        { upTo: 300000,   rate: 0.10, label: "10% slab  -  Next Tk 3,00,000"  },  // [NBR] 10%
+        { upTo: 400000,   rate: 0.15, label: "15% slab  -  Next Tk 4,00,000"  },  // [NBR] 15%
+        { upTo: 500000,   rate: 0.20, label: "20% slab  -  Next Tk 5,00,000"  },  // [NBR] 20%
+        { upTo: 2000000,  rate: 0.25, label: "25% slab  -  Next Tk 20,00,000" },  // [NBR] 25%
+        { upTo: Infinity, rate: 0.30, label: "30% slab  -  Balance"           },  // [NBR] 30%
+    ],
+
+    // ── INVESTMENT REBATE ────────────────────────────────────────────────────
+    // Source: Section 78, ITA 2023 — Rebate = lowest of Options A, B, C
+    REBATE: {
+        OPTION_A_RATE: 0.03,    // [NBR] Option A = 3% of net taxable income
+        OPTION_B_RATE: 0.10,    // [NBR] Option B = 10% of eligible investments
+        OPTION_C_MAX:  750000,  // [NBR] Option C = Absolute cap         — Tk 7,50,000
+    },
+
+    // ── INVESTMENT ELIGIBLE CEILING ──────────────────────────────────────────
+    // Source: Sixth Schedule (Part-B), Para 1
+    INVESTMENT_ELIGIBLE: {
+        RATE: 0.30,         // [NBR] Max 30% of taxable income qualifies
+        CAP:  15000000,     // [NBR] Absolute ceiling             — Tk 1,50,00,000
+    },
+
+    // ── MINIMUM TAX BY AREA (Annual, BDT) ────────────────────────────────────
+    // Source: Section 163, ITA 2023
+    MINIMUM_TAX: {
+        DHAKA_CTG_CITY_CORP:      5000,  // [NBR] Dhaka & Chittagong City Corp.  — Tk 5,000
+        OTHER_CITY_CORP:          4000,  // [NBR] Other City Corporations         — Tk 4,000
+        DISTRICT_HQ_POURASHAVA:   3000,  // [NBR] District HQ & Pourashava       — Tk 3,000
+        OTHER:                    2000,  // [NBR] All other areas                 — Tk 2,000
+    },
+
+    // ── ELIGIBLE INSTRUMENTS ─────────────────────────────────────────────────
+    // Source: Sixth Schedule (Part-B), ITA 2023
+    ELIGIBLE_INSTRUMENTS: [
+        "Life Insurance Premium",
+        "Deposit Pension Scheme (DPS)",
+        "National Savings Scheme (Sanchayapatra)",
+        "Government Treasury Bond / Sukuk",
+        "Approved Mutual Fund / Unit Fund",
+        "CSE / DSE Listed Securities",
+        "Employer Provident Fund (EPF)",
+        "Approved Superannuation Fund",
+        "Welfare Fund / Group Insurance",
+        "Approved Debentures / Bonds",
+    ],
+};
+// ══ END NBR CONFIGURATION — edit calculation logic below with care ══════════
+
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const taka  = (n) => '\u09F3 ' + Math.round(Math.abs(n)).toLocaleString('en-IN');  // web UI
+const tkPDF = (n) => 'Tk. ' + Math.round(Math.abs(n)).toLocaleString('en-IN');     // PDF (ASCII-safe)
+const $     = (id) => document.getElementById(id);
+const set   = (id, v) => { $(id).innerText = v; };
+
+
+function populateInstruments() {
+    $('instList').innerHTML = TAX_CONFIG.ELIGIBLE_INSTRUMENTS
+        .map(i => `<div class="inst-item"><span style="color:#16a34a;font-size:9px;">&#10003;</span>${i}</div>`)
+        .join('');
+}
+
+// ── MAIN CALCULATION ─────────────────────────────────────────────────────────
+function calc() {
+    const gender   = $('gender').value;
+    const location = $('location').value;
+    const salary   = parseFloat($('grossSalary').value)  || 0;
+    const bonus    = parseFloat($('festivalBonus').value) || 0;
+    const other    = parseFloat($('otherIncome').value)   || 0;
+    const invested = parseFloat($('currentInv').value)    || 0;
+    const tds      = parseFloat($('sourceTax').value)     || 0;
+
+    const employment = salary + bonus;
+    const gross      = employment + other;
+    set('totalGross', taka(gross));
+
+    // A. Exemption
+    const { FRACTION, MAX_CAP } = TAX_CONFIG.SALARY_EXEMPTION;
+    const oneThird  = employment * FRACTION;
+    const exemption = Math.min(MAX_CAP, oneThird);
+    const taxable   = Math.max(0, gross - exemption);
+
+    set('rExCap',    taka(MAX_CAP));
+    set('rOneThird', taka(oneThird));
+    set('rExemption',taka(exemption));
+    set('rTaxable',  taka(taxable));
+
+    // B. Slabs
+    const threshold = TAX_CONFIG.THRESHOLD[gender];
+    set('rThreshold', taka(threshold));
+
+    let rem = Math.max(0, taxable - threshold);
+    let baseTax = 0;
+    const slabResults = [];
+    $('slabRows').innerHTML = '';
+
+    for (const slab of TAX_CONFIG.TAX_SLABS) {
+        const chunk   = Math.min(rem, slab.upTo);
+        const slabTax = chunk * slab.rate;
+        baseTax  += slabTax;
+        rem      -= chunk;
+        slabResults.push({ label: slab.label, chunk, slabTax });
+
+        const row = document.createElement('div');
+        row.className = 'r';
+        row.innerHTML = `<span class="l">${slab.label}</span><span class="v" style="color:${slabTax > 0 ? 'var(--red)' : 'var(--muted)'};">${taka(slabTax)}</span>`;
+        $('slabRows').appendChild(row);
+        if (rem <= 0) break;
+    }
+    set('rBaseTax', taka(baseTax));
+    set('sumBase',  taka(baseTax));
+
+    // C. Rebate
+    const { OPTION_A_RATE, OPTION_B_RATE, OPTION_C_MAX } = TAX_CONFIG.REBATE;
+    const optA   = taxable   * OPTION_A_RATE;
+    const optB   = invested  * OPTION_B_RATE;
+    const optC   = OPTION_C_MAX;
+    const rebate = Math.min(optA, optB, optC);
+    const appliedOpt = (optA <= optB && optA <= optC) ? 'A' : (optB <= optC) ? 'B' : 'C';
+
+    set('rOptA',   taka(optA));
+    set('rOptB',   taka(optB));
+    set('rOptC',   taka(optC));
+    set('rRebate', taka(rebate));
+    set('sumRebate', taka(rebate));
+
+    // D. Final
+    let netTax = Math.max(0, baseTax - rebate);
+    const minTax    = TAX_CONFIG.MINIMUM_TAX[location];
+    const minApply  = gross > threshold && netTax < minTax && gross > 0;
+    if (minApply) {
+        netTax = minTax;
+        const locLbl = $('location').options[$('location').selectedIndex].text;
+        $('minNotice').style.display = 'block';
+        $('minMsg').innerText = `Computed tax (${taka(baseTax - rebate)}) is below the minimum tax of ${taka(minTax)} for ${locLbl}.`;
+    } else {
+        $('minNotice').style.display = 'none';
+    }
+
+    const diff = netTax - tds;
+    set('rNetTax', taka(netTax));
+    set('rTDS',    taka(tds));
+
+    const sc = $('statusCard');
+    if (diff > 0) {
+        sc.className = 'scard due';
+        set('sLabel',  'Net Tax Due to Pay');
+        set('sAmount', taka(diff));
+        set('sNote',   'Pay this amount to NBR before the return deadline.');
+    } else if (diff < 0) {
+        sc.className = 'scard ref';
+        set('sLabel',  'Refund Eligible');
+        set('sAmount', taka(Math.abs(diff)));
+        set('sNote',   'You are owed a refund. Claim it in your IT return.');
+    } else {
+        sc.className = 'scard ok';
+        set('sLabel',  'Tax Fully Settled');
+        set('sAmount', taka(0));
+        set('sNote',   'TDS paid matches tax payable. Nothing due or refundable.');
+    }
+
+    // E. Investment plan
+    const { RATE: IR, CAP: IC } = TAX_CONFIG.INVESTMENT_ELIGIBLE;
+    const maxElig  = Math.min(taxable * IR, IC);
+    const target   = Math.min(optA, optC) / OPTION_B_RATE;
+    const stillNd  = Math.max(0, target - invested);
+    const saving   = Math.min(stillNd * OPTION_B_RATE, Math.max(0, Math.min(optA, optC) - rebate));
+
+    set('rMaxElig',  taka(maxElig));
+    set('rTarget',   taka(target));
+    set('rStillNeed',taka(stillNd));
+    set('rSaving',   taka(saving));
+
+    window._st = {
+        gender, location, salary, bonus, other, invested, tds,
+        employment, gross, oneThird, exemption, taxable, threshold,
+        slabResults, baseTax, optA, optB, optC, rebate, appliedOpt,
+        netTax, diff, minApply, minTax, maxElig, target, stillNd, saving,
+    };
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+//   PDF REPORT GENERATION
+//   NOTE: jsPDF uses Helvetica — only ASCII characters render correctly.
+//   All BDT amounts use "Tk." prefix; no Unicode symbols are used in PDF.
+// ══════════════════════════════════════════════════════════════════════════════
+function downloadPDF() {
+    const s = window._st;
+    if (!s || s.gross === 0) {
+        alert('Please enter income details before downloading.'); return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc  = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const PW   = doc.internal.pageSize.getWidth();
+    const PH   = doc.internal.pageSize.getHeight();
+    const ML   = 15;
+    const CW   = PW - ML * 2;
+    let   y    = ML;
+
+    // ── Text helper (ASCII-safe only) ────────────────────────────────────────
+    const T = (txt, x, yy, opts = {}) => {
+        doc.setFontSize(opts.sz || 9);
+        doc.setFont('helvetica', opts.style || 'normal');
+        doc.setTextColor(...(opts.clr || [30, 30, 30]));
+        doc.text(String(txt), x, yy, { align: opts.align || 'left' });
+    };
+
+    // ── Section header bar ────────────────────────────────────────────────────
+    const secBar = (title, yy) => {
+        doc.setFillColor(242, 244, 247);
+        doc.setDrawColor(180, 185, 195);
+        doc.rect(ML, yy, CW, 7, 'FD');
+        T(title, ML + 3, yy + 5, { sz: 9.5, style: 'bold', clr: [30, 60, 110] });
+        return yy + 10;
+    };
+
+    const guard = (need) => { if (y + need > PH - 16) { doc.addPage(); y = 18; } };
+
+    // ── PDF HEADER ────────────────────────────────────────────────────────────
+    doc.setFillColor(240, 244, 250);
+    doc.rect(0, 0, PW, 38, 'F');
+    doc.setDrawColor(29, 78, 216);
+    doc.setLineWidth(0.8);
+    doc.line(0, 38, PW, 38);
+    doc.setLineWidth(0.2);
+
+    T('BANGLADESH INCOME TAX ANALYSIS REPORT', ML, 12, { sz: 14, style: 'bold', clr: [15, 30, 80] });
+    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR + '   |   Income Tax Act 2023   |   NBR Official Rules', ML, 19, { sz: 9, clr: [60, 90, 150] });
+
+    const name   = $('taxpayerName').value.trim() || 'N/A';
+    const tin    = $('taxpayerTIN').value.trim()  || 'N/A';
+    const catLbl = $('gender').options[$('gender').selectedIndex].text;
+    const locLbl = $('location').options[$('location').selectedIndex].text;
+    const dated  = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+
+    T('Taxpayer : ' + name,  ML,      27, { sz: 9, clr: [30,50,100] });
+    T('TIN      : ' + tin,   ML + 85, 27, { sz: 9, clr: [30,50,100] });
+    T('Category : ' + catLbl, ML,     34, { sz: 8.5, clr: [60,80,130] });
+    T('Location : ' + locLbl, ML + 85,34, { sz: 8.5, clr: [60,80,130] });
+    T('Generated: ' + dated,  PW - ML,34, { sz: 8.5, clr: [60,80,130], align: 'right' });
+
+    y = 46;
+
+    // ── autoTable default styles ──────────────────────────────────────────────
+    const tblDefaults = {
+        styles:           { fontSize: 9, cellPadding: 3, font: 'helvetica' },
+        headStyles:       { fillColor: [50,70,130], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles:{ fillColor: [246,248,252] },
+    };
+
+    // ── 1. INCOME SUMMARY ─────────────────────────────────────────────────────
+    y = secBar('1.  INCOME SUMMARY', y);
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        head: [['Income Component', 'Annual Amount (BDT)']],
+        body: [
+            ['Fixed Gross Salary',    tkPDF(s.salary)],
+            ['Festival Bonuses',      tkPDF(s.bonus)],
+            ['Other Taxable Income',  tkPDF(s.other)],
+            ['TOTAL GROSS INCOME',    tkPDF(s.gross)],
+        ],
+        columnStyles: { 1: { halign: 'right' } },
+        didParseCell: (d) => {
+            if (d.row.index === 3) {
+                d.cell.styles.fillColor  = [220, 230, 255];
+                d.cell.styles.fontStyle  = 'bold';
+                d.cell.styles.textColor  = [15, 40, 120];
             }
-            if (remainingTaxable > 0) {
-                let slab = Math.min(remainingTaxable, 400000);
-                tax15 = slab * 0.15;
-                remainingTaxable -= slab;
+        },
+    });
+    y = doc.lastAutoTable.finalY + 7;
+
+    // ── 2. EXEMPTION ──────────────────────────────────────────────────────────
+    guard(48);
+    y = secBar('2.  EXEMPTION CALCULATION   (Sixth Schedule, Part-A)', y);
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        head: [['Rule', 'Calculation', 'Amount (BDT)']],
+        body: [
+            ['Salary Exemption Hard Cap',   'Maximum allowed by NBR',                          tkPDF(s.exemption > s.oneThird ? s.exemption : TAX_CONFIG.SALARY_EXEMPTION.MAX_CAP)],
+            ['1/3rd of Employment Income',  '1/3 x ' + tkPDF(s.employment),                   tkPDF(s.oneThird)],
+            ['Actual Exemption Applied',    'Lower of the above two',                          tkPDF(s.exemption)],
+            ['NET TAXABLE INCOME',          tkPDF(s.gross) + ' - ' + tkPDF(s.exemption),       tkPDF(s.taxable)],
+        ],
+        columnStyles: { 2: { halign: 'right' } },
+        didParseCell: (d) => {
+            if (d.row.index === 3) {
+                d.cell.styles.fillColor = [220, 230, 255];
+                d.cell.styles.fontStyle = 'bold';
+                d.cell.styles.textColor = [15, 40, 120];
             }
-            if (remainingTaxable > 0) {
-                let slab = Math.min(remainingTaxable, 500000);
-                tax20 = slab * 0.20;
-                remainingTaxable -= slab;
+        },
+    });
+    y = doc.lastAutoTable.finalY + 7;
+
+    // ── 3. TAX SLABS ──────────────────────────────────────────────────────────
+    guard(58);
+    y = secBar('3.  TAX SLAB CALCULATION   (Third Schedule, Finance Act)', y);
+    const slabBody = [
+        ['0%  -  Tax-Free Threshold', catLbl, tkPDF(s.threshold), tkPDF(0)],
+        ...s.slabResults.map(r => [r.label, '', r.chunk > 0 ? tkPDF(r.chunk) : '-', tkPDF(r.slabTax)]),
+        ['TOTAL BASE TAX LIABILITY', '', '', tkPDF(s.baseTax)],
+    ];
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        head: [['Slab', 'Applies To', 'Income in Slab', 'Tax (BDT)']],
+        body: slabBody,
+        columnStyles: {
+            2: { halign: 'right' },
+            3: { halign: 'right', fontStyle: 'bold', textColor: [180, 20, 20] },
+        },
+        didParseCell: (d) => {
+            if (d.row.index === slabBody.length - 1) {
+                d.cell.styles.fillColor = [255, 225, 225];
+                d.cell.styles.fontStyle = 'bold';
+                d.cell.styles.textColor = [140, 20, 20];
             }
-            if (remainingTaxable > 0) {
-                let slab = Math.min(remainingTaxable, 2000000);
-                tax25 = slab * 0.25;
-                remainingTaxable -= slab;
+        },
+    });
+    y = doc.lastAutoTable.finalY + 7;
+
+    // ── 4. REBATE ─────────────────────────────────────────────────────────────
+    guard(52);
+    y = secBar('4.  INVESTMENT REBATE   (Section 78, Income Tax Act 2023)', y);
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        head: [['Option', 'Formula', 'Amount (BDT)', 'Status']],
+        body: [
+            ['Option A', TAX_CONFIG.REBATE.OPTION_A_RATE * 100 + '% x Net Taxable Income',  tkPDF(s.optA), s.appliedOpt === 'A' ? 'Applied' : ''],
+            ['Option B', TAX_CONFIG.REBATE.OPTION_B_RATE * 100 + '% x Actual Investments',  tkPDF(s.optB), s.appliedOpt === 'B' ? 'Applied' : ''],
+            ['Option C', 'Statutory Maximum Cap',                                             tkPDF(s.optC), s.appliedOpt === 'C' ? 'Applied' : ''],
+            ['REBATE APPLIED', 'Minimum of A, B, C',                                         tkPDF(s.rebate), ''],
+        ],
+        columnStyles: {
+            2: { halign: 'right', fontStyle: 'bold' },
+            3: { halign: 'center', textColor: [20, 100, 40], fontStyle: 'bold' },
+        },
+        didParseCell: (d) => {
+            if (d.row.index === 3) {
+                d.cell.styles.fillColor = [215, 245, 225];
+                d.cell.styles.fontStyle = 'bold';
+                d.cell.styles.textColor = [15, 80, 40];
             }
-            if (remainingTaxable > 0) {
-                tax30 = remainingTaxable * 0.30;
+        },
+    });
+    y = doc.lastAutoTable.finalY + 7;
+
+    // ── 5. FINAL OUTCOME ──────────────────────────────────────────────────────
+    guard(50);
+    y = secBar('5.  FINAL TAX OUTCOME', y);
+    const outcomeRow = s.diff > 0
+        ? 'TAX DUE TO PAY: ' + tkPDF(s.diff)
+        : s.diff < 0
+            ? 'REFUND ELIGIBLE: ' + tkPDF(Math.abs(s.diff))
+            : 'TAX FULLY SETTLED  (No Due / No Refund)';
+
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        body: [
+            ['Total Base Tax Liability',           tkPDF(s.baseTax)],
+            ['Less: Investment Rebate',            '(' + tkPDF(s.rebate) + ')'],
+            ['Net Tax Payable After Rebate',       tkPDF(s.netTax)],
+            ['Less: Source Tax Paid (TDS / AIT)',  '(' + tkPDF(s.tds) + ')'],
+            [outcomeRow,                           s.diff !== 0 ? tkPDF(Math.abs(s.diff)) : tkPDF(0)],
+        ],
+        styles:     { fontSize: 9, cellPadding: 3.5 },
+        columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+        alternateRowStyles: { fillColor: [248, 249, 252] },
+        didParseCell: (d) => {
+            if (d.row.index === 4) {
+                d.cell.styles.fillColor = s.diff > 0 ? [255, 220, 220] : s.diff < 0 ? [215, 230, 255] : [215, 245, 225];
+                d.cell.styles.fontStyle = 'bold';
+                d.cell.styles.textColor = s.diff > 0 ? [140,20,20] : s.diff < 0 ? [20,40,130] : [15,80,40];
+                d.cell.styles.fontSize  = 10;
             }
+        },
+    });
+    y = doc.lastAutoTable.finalY + 4;
 
-            const totalBaseTax = tax10 + tax15 + tax20 + tax25 + tax30;
+    if (s.minApply) {
+        const locL = $('location').options[$('location').selectedIndex].text;
+        T('[!]  Minimum tax rule applied: Tk. ' + s.minTax.toLocaleString('en-IN') +
+          ' for ' + locL + ' (Section 163)',
+          ML, y + 5, { sz: 8, style: 'italic', clr: [140, 80, 10] });
+        y += 10;
+    }
+    y += 4;
 
-            document.getElementById('tax10').innerText = formatCurrency(tax10);
-            document.getElementById('tax15').innerText = formatCurrency(tax15);
-            document.getElementById('tax20').innerText = formatCurrency(tax20);
-            document.getElementById('tax25').innerText = formatCurrency(tax25);
-            document.getElementById('tax30').innerText = formatCurrency(tax30);
-            document.getElementById('baseTaxLiability').innerText = formatCurrency(totalBaseTax);
-
-            // 4. Rebate Calculation
-            const optA = netTaxableIncome * 0.03;
-            const optB = currentInvestments * 0.10;
-            const optC = 750000;
-            const actualRebate = Math.min(optA, optB, optC);
-
-            document.getElementById('optA').innerText = formatCurrency(optA);
-            document.getElementById('optB').innerText = formatCurrency(optB);
-            document.getElementById('optC').innerText = formatCurrency(optC);
-            document.getElementById('actualRebate').innerText = formatCurrency(actualRebate);
-
-            // 5. Final Outcome & Action Plan
-            const netTaxPayable = Math.max(0, totalBaseTax - actualRebate);
-            const finalTaxDifference = netTaxPayable - sourceTaxPaid;
-            
-            document.getElementById('netTaxPayable').innerText = formatCurrency(netTaxPayable);
-            document.getElementById('displaySourceTaxPaid').innerText = formatCurrency(sourceTaxPaid);
-
-            const statusLabel = document.getElementById('finalStatusLabel');
-            const statusAmount = document.getElementById('finalStatusAmount');
-
-            if (finalTaxDifference > 0) {
-                statusLabel.innerText = "Net Tax Due to Pay";
-                statusLabel.className = "text-red-600";
-                statusAmount.className = "text-red-600";
-                statusAmount.innerText = formatCurrency(finalTaxDifference);
-            } else if (finalTaxDifference < 0) {
-                statusLabel.innerText = "Total Source Tax Refund";
-                statusLabel.className = "text-blue-600";
-                statusAmount.className = "text-blue-600";
-                statusAmount.innerText = formatCurrency(Math.abs(finalTaxDifference));
-            } else {
-                statusLabel.innerText = "Tax fully settled (No Due/Refund)";
-                statusLabel.className = "text-green-600";
-                statusAmount.className = "text-green-600";
-                statusAmount.innerText = formatCurrency(0);
+    // ── 6. INVESTMENT ACTION PLAN ─────────────────────────────────────────────
+    guard(58);
+    y = secBar('6.  INVESTMENT ACTION PLAN   (Sixth Schedule, Part-B)', y);
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        head: [['Parameter', 'Amount (BDT)', 'Notes']],
+        body: [
+            ['Net Taxable Income',                                            tkPDF(s.taxable),   ''],
+            ['Max Eligible for Rebate (' + TAX_CONFIG.INVESTMENT_ELIGIBLE.RATE * 100 + '% of taxable)', tkPDF(s.maxElig), 'Cap: Tk. 1.5 Crore'],
+            ['Investments Already Made',                                      tkPDF(s.invested),  ''],
+            ['Target Investment for Full Rebate',                             tkPDF(s.target),    'To claim maximum rebate'],
+            ['Additional Investment Still Needed',                            tkPDF(s.stillNd),   '** Action required'],
+            ['Tax Saving by Investing Remaining Amount',                      tkPDF(s.saving),    'Immediate benefit'],
+        ],
+        headStyles: { fillColor: [20, 110, 60], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [238, 252, 245] },
+        columnStyles: {
+            1: { halign: 'right', fontStyle: 'bold', textColor: [15, 100, 50] },
+            2: { halign: 'left', fontSize: 8, textColor: [100, 110, 120] },
+        },
+        didParseCell: (d) => {
+            if (d.row.index === 4) {
+                d.cell.styles.fillColor = [255, 245, 210];
+                d.cell.styles.fontStyle = 'bold';
+                d.cell.styles.textColor = [130, 70, 10];
             }
+        },
+    });
+    y = doc.lastAutoTable.finalY + 7;
 
-            // Investment calculations
-            const maxPossibleRebate = Math.min(optA, optC);
-            const targetInvestment = maxPossibleRebate / 0.10; 
-            const remainingInvestment = Math.max(0, targetInvestment - currentInvestments);
+    // ── 7. ELIGIBLE INSTRUMENTS ───────────────────────────────────────────────
+    const instRows = [];
+    const half = Math.ceil(TAX_CONFIG.ELIGIBLE_INSTRUMENTS.length / 2);
+    for (let i = 0; i < half; i++) {
+        instRows.push([
+            '- ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i],
+            i + half < TAX_CONFIG.ELIGIBLE_INSTRUMENTS.length
+                ? '- ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i + half]
+                : '',
+        ]);
+    }
+    guard(12 + instRows.length * 7);
+    y = secBar('7.  ELIGIBLE INVESTMENT INSTRUMENTS   (Sixth Schedule, Part-B)', y);
+    doc.autoTable({
+        ...tblDefaults, startY: y, margin: { left: ML, right: ML },
+        body: instRows,
+        styles:     { fontSize: 8.5, cellPadding: 2.5, textColor: [15, 90, 45] },
+        alternateRowStyles: { fillColor: [238, 252, 245] },
+        tableLineColor: [180, 230, 200],
+        tableLineWidth: 0.4,
+    });
+    y = doc.lastAutoTable.finalY + 5;
 
-            document.getElementById('targetInvestment').innerText = formatCurrency(targetInvestment);
-            document.getElementById('remainingInvestment').innerText = formatCurrency(remainingInvestment);
-        }
+    // ── FOOTER on every page ──────────────────────────────────────────────────
+    const total = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= total; p++) {
+        doc.setPage(p);
+        doc.setFillColor(245, 247, 250);
+        doc.rect(0, PH - 11, PW, 11, 'F');
+        doc.setDrawColor(200, 205, 215);
+        doc.setLineWidth(0.3);
+        doc.line(0, PH - 11, PW, PH - 11);
+        T('Auto-generated report for planning purposes only. Consult a certified tax consultant for official NBR return filing.',
+          ML, PH - 4, { sz: 6.5, clr: [140, 145, 155] });
+        T('Page ' + p + ' / ' + total, PW - ML, PH - 4, { sz: 6.5, clr: [140, 145, 155], align: 'right' });
+    }
 
-        // Initialize calculation on page load
-        window.onload = calculateTax;
-    </script>
+    // ── FILENAME: Generated_Tax_Report_of_Name_TIN_FY ────────────────────────
+    const safeName = ($('taxpayerName').value.trim() || 'Taxpayer').replace(/\s+/g, '_');
+    const safeTIN  = ($('taxpayerTIN').value.trim()  || 'NoTIN').replace(/\s+/g, '_');
+    const safeFY   = TAX_CONFIG.FISCAL_YEAR.replace('-', '_');
+    doc.save('Generated_Tax_Report_of_' + safeName + '_' + safeTIN + '_FY' + safeFY + '.pdf');
+}
+
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.onload = () => {
+    $('hdrFY').innerText = 'FY ' + TAX_CONFIG.FISCAL_YEAR;
+    populateInstruments();
+    calc();
+};
+</script>
 </body>
 </html>
