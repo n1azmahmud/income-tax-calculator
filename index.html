@@ -117,7 +117,7 @@
             document.getElementById('totalGrossIncome').innerText = formatCurrency(totalGross);
 
             // 2. Exemption & Taxable Income
-            const maxExemptionCap = 450000; 
+            const maxExemptionCap = 500000; 
             const oneThirdGross = totalGross / 3;
             const actualExemption = Math.min(maxExemptionCap, oneThirdGross);
             const netTaxableIncome = Math.max(0, totalGross - actualExemption);
