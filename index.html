@@ -575,7 +575,7 @@ function calc() {
 
 
 // ══════════════════════════════════════════════════════════════════════════════
-//   PDF REPORT GENERATION
+//   PDF REPORT GENERATION (MODERN UI)
 //   NOTE: jsPDF uses Helvetica — only ASCII characters render correctly.
 //   All BDT amounts use "Tk." prefix; no Unicode symbols are used in PDF.
 // ══════════════════════════════════════════════════════════════════════════════
@@ -593,59 +593,81 @@ function downloadPDF() {
     const CW   = PW - ML * 2;
     let   y    = ML;
 
-    // ── Text helper (ASCII-safe only) ────────────────────────────────────────
+    // ── Brand Colors ──────────────────────────────────────────────────────────
+    const COL = {
+        primary: [45, 85, 180],    // Deep Blue
+        secondary: [71, 85, 105],  // Slate Gray
+        accent: [37, 99, 235],     // Bright Blue
+        success: [16, 185, 129],   // Emerald Green
+        danger: [225, 29, 72],     // Rose/Red
+        lightBk: [248, 250, 252],  // Very light gray/blue
+        border: [226, 232, 240]    // Soft border
+    };
+
+    // ── Text helper ───────────────────────────────────────────────────────────
     const T = (txt, x, yy, opts = {}) => {
         doc.setFontSize(opts.sz || 9);
         doc.setFont('helvetica', opts.style || 'normal');
-        doc.setTextColor(...(opts.clr || [30, 30, 30]));
+        doc.setTextColor(...(opts.clr || [15, 23, 42]));
         doc.text(String(txt), x, yy, { align: opts.align || 'left' });
     };
 
-    // ── Section header bar ────────────────────────────────────────────────────
+    // ── Modern Section Header ─────────────────────────────────────────────────
     const secBar = (title, yy) => {
-        doc.setFillColor(242, 244, 247);
-        doc.setDrawColor(180, 185, 195);
-        doc.rect(ML, yy, CW, 7, 'FD');
-        T(title, ML + 3, yy + 5, { sz: 9.5, style: 'bold', clr: [30, 60, 110] });
-        return yy + 10;
+        // Sleek left accent line instead of a full box
+        doc.setFillColor(...COL.accent);
+        doc.rect(ML, yy, 2.5, 6.5, 'F');
+        T(title, ML + 5, yy + 5.5, { sz: 11, style: 'bold', clr: COL.primary });
+        return yy + 12;
     };
 
     const guard = (need) => { if (y + need > PH - 16) { doc.addPage(); y = 18; } };
 
-    // ── PDF HEADER ────────────────────────────────────────────────────────────
-    doc.setFillColor(240, 244, 250);
-    doc.rect(0, 0, PW, 38, 'F');
-    doc.setDrawColor(29, 78, 216);
-    doc.setLineWidth(0.8);
-    doc.line(0, 38, PW, 38);
-    doc.setLineWidth(0.2);
+    // ── 1. PDF HEADER (Full Bleed Dark Header) ────────────────────────────────
+    doc.setFillColor(...COL.primary);
+    doc.rect(0, 0, PW, 32, 'F');
+    
+    T('INCOME TAX ANALYSIS REPORT', ML, 16, { sz: 16, style: 'bold', clr: [255, 255, 255] });
+    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR, ML, 23, { sz: 10, clr: [191, 219, 254] });
+    
+    const dated = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+    T('Generated: ' + dated, PW - ML, 23, { sz: 9, clr: [191, 219, 254], align: 'right' });
 
-    T('BANGLADESH INCOME TAX ANALYSIS REPORT', ML, 12, { sz: 14, style: 'bold', clr: [15, 30, 80] });
-    T('Fiscal Year: ' + TAX_CONFIG.FISCAL_YEAR, ML, 19, { sz: 9, clr: [60, 90, 150] });
+    // ── 2. TAXPAYER INFO CARD ─────────────────────────────────────────────────
+    y = 38;
+    doc.setFillColor(...COL.lightBk);
+    doc.setDrawColor(...COL.border);
+    doc.roundedRect(ML, y, CW, 20, 3, 3, 'FD'); // Soft rounded info card
 
     const name   = $('taxpayerName').value.trim() || 'N/A';
     const tin    = $('taxpayerTIN').value.trim()  || 'N/A';
     const catLbl = $('gender').options[$('gender').selectedIndex].text;
     const locLbl = $('location').options[$('location').selectedIndex].text;
-    const dated  = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
 
-    T('Taxpayer : ' + name,  ML,      27, { sz: 9, clr: [30,50,100] });
-    T('TIN      : ' + tin,   ML + 85, 27, { sz: 9, clr: [30,50,100] });
-    T('Category : ' + catLbl, ML,     34, { sz: 8.5, clr: [60,80,130] });
-    T('Location : ' + locLbl, ML + 85,34, { sz: 8.5, clr: [60,80,130] });
-    T('Generated: ' + dated,  PW - ML,34, { sz: 8.5, clr: [60,80,130], align: 'right' });
+    T('Taxpayer Name :', ML + 5, y + 7, { sz: 9, clr: COL.secondary });
+    T(name, ML + 35, y + 7, { sz: 9, style: 'bold' });
+    
+    T('TIN / NID :', ML + 100, y + 7, { sz: 9, clr: COL.secondary });
+    T(tin, ML + 125, y + 7, { sz: 9, style: 'bold' });
 
-    y = 46;
+    T('Category :', ML + 5, y + 15, { sz: 9, clr: COL.secondary });
+    T(catLbl, ML + 35, y + 15, { sz: 9, style: 'bold' });
 
-    // ── autoTable default styles ──────────────────────────────────────────────
+    T('Location :', ML + 100, y + 15, { sz: 9, clr: COL.secondary });
+    T(locLbl, ML + 125, y + 15, { sz: 9, style: 'bold' });
+
+    y += 28;
+
+    // ── autoTable Modern Defaults ─────────────────────────────────────────────
     const tblDefaults = {
-        styles:           { fontSize: 9, cellPadding: 3, font: 'helvetica' },
-        headStyles:       { fillColor: [50,70,130], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles:{ fillColor: [246,248,252] },
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 4, font: 'helvetica', textColor: [51, 65, 85], lineColor: [226, 232, 240], lineWidth: 0.1 },
+        headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [250, 252, 254] },
     };
 
-    // ── 1. INCOME SUMMARY ─────────────────────────────────────────────────────
-    y = secBar('1.  INCOME SUMMARY', y);
+    // ── 3. INCOME SUMMARY ─────────────────────────────────────────────────────
+    y = secBar('1. INCOME SUMMARY', y);
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
         head: [['Income Component', 'Annual Amount (BDT)']],
@@ -658,17 +680,17 @@ function downloadPDF() {
         columnStyles: { 1: { halign: 'right' } },
         didParseCell: (d) => {
             if (d.row.index === 3) {
-                d.cell.styles.fillColor  = [220, 230, 255];
+                d.cell.styles.fillColor  = [239, 246, 255]; // Soft blue
                 d.cell.styles.fontStyle  = 'bold';
-                d.cell.styles.textColor  = [15, 40, 120];
+                d.cell.styles.textColor  = COL.primary;
             }
         },
     });
-    y = doc.lastAutoTable.finalY + 7;
+    y = doc.lastAutoTable.finalY + 8;
 
-    // ── 2. EXEMPTION ──────────────────────────────────────────────────────────
+    // ── 4. EXEMPTION ──────────────────────────────────────────────────────────
     guard(48);
-    y = secBar('2.  EXEMPTION CALCULATION   (Sixth Schedule, Part-A)', y);
+    y = secBar('2. EXEMPTION CALCULATION (Sixth Schedule, Part-A)', y);
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
         head: [['Rule', 'Calculation', 'Amount (BDT)']],
@@ -681,19 +703,19 @@ function downloadPDF() {
         columnStyles: { 2: { halign: 'right' } },
         didParseCell: (d) => {
             if (d.row.index === 3) {
-                d.cell.styles.fillColor = [220, 230, 255];
+                d.cell.styles.fillColor = [239, 246, 255];
                 d.cell.styles.fontStyle = 'bold';
-                d.cell.styles.textColor = [15, 40, 120];
+                d.cell.styles.textColor = COL.primary;
             }
         },
     });
-    y = doc.lastAutoTable.finalY + 7;
+    y = doc.lastAutoTable.finalY + 8;
 
-    // ── 3. TAX SLABS ──────────────────────────────────────────────────────────
+    // ── 5. TAX SLABS ──────────────────────────────────────────────────────────
     guard(58);
-    y = secBar('3.  TAX SLAB CALCULATION   (Third Schedule, Finance Act)', y);
+    y = secBar('3. TAX SLAB CALCULATION (Third Schedule, Finance Act)', y);
     const slabBody = [
-        ['0%  -  Tax-Free Threshold', catLbl, tkPDF(s.threshold), tkPDF(0)],
+        ['0% - Tax-Free Threshold', catLbl, tkPDF(s.threshold), tkPDF(0)],
         ...s.slabResults.map(r => [r.label, '', r.chunk > 0 ? tkPDF(r.chunk) : '-', tkPDF(r.slabTax)]),
         ['TOTAL BASE TAX LIABILITY', '', '', tkPDF(s.baseTax)],
     ];
@@ -703,21 +725,21 @@ function downloadPDF() {
         body: slabBody,
         columnStyles: {
             2: { halign: 'right' },
-            3: { halign: 'right', fontStyle: 'bold', textColor: [180, 20, 20] },
+            3: { halign: 'right', fontStyle: 'bold', textColor: COL.danger },
         },
         didParseCell: (d) => {
             if (d.row.index === slabBody.length - 1) {
-                d.cell.styles.fillColor = [255, 225, 225];
+                d.cell.styles.fillColor = [254, 242, 242]; // Soft red
                 d.cell.styles.fontStyle = 'bold';
-                d.cell.styles.textColor = [140, 20, 20];
+                d.cell.styles.textColor = COL.danger;
             }
         },
     });
-    y = doc.lastAutoTable.finalY + 7;
+    y = doc.lastAutoTable.finalY + 8;
 
-    // ── 4. REBATE ─────────────────────────────────────────────────────────────
+    // ── 6. REBATE ─────────────────────────────────────────────────────────────
     guard(52);
-    y = secBar('4.  INVESTMENT REBATE   (Section 78, Income Tax Act 2023)', y);
+    y = secBar('4. INVESTMENT REBATE (Section 78, Income Tax Act)', y);
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
         head: [['Option', 'Formula', 'Amount (BDT)', 'Status']],
@@ -729,26 +751,35 @@ function downloadPDF() {
         ],
         columnStyles: {
             2: { halign: 'right', fontStyle: 'bold' },
-            3: { halign: 'center', textColor: [20, 100, 40], fontStyle: 'bold' },
+            3: { halign: 'center', textColor: COL.success, fontStyle: 'bold' },
         },
         didParseCell: (d) => {
             if (d.row.index === 3) {
-                d.cell.styles.fillColor = [215, 245, 225];
+                d.cell.styles.fillColor = [236, 253, 245]; // Soft green
                 d.cell.styles.fontStyle = 'bold';
-                d.cell.styles.textColor = [15, 80, 40];
+                d.cell.styles.textColor = COL.success;
             }
         },
     });
-    y = doc.lastAutoTable.finalY + 7;
+    y = doc.lastAutoTable.finalY + 8;
 
-    // ── 5. FINAL OUTCOME ──────────────────────────────────────────────────────
-    guard(50);
-    y = secBar('5.  FINAL TAX OUTCOME', y);
-    const outcomeRow = s.diff > 0
-        ? 'TAX DUE TO PAY: ' + tkPDF(s.diff)
-        : s.diff < 0
-            ? 'REFUND ELIGIBLE: ' + tkPDF(Math.abs(s.diff))
-            : 'TAX FULLY SETTLED  (No Due / No Refund)';
+    // ── 7. FINAL OUTCOME ──────────────────────────────────────────────────────
+    guard(60);
+    y = secBar('5. FINAL TAX OUTCOME', y);
+    
+    let outcomeRow = 'TAX FULLY SETTLED (No Due / No Refund)';
+    let outcomeColor = COL.success;
+    let outcomeBg = [236, 253, 245];
+
+    if (s.diff > 0) {
+        outcomeRow = 'NET TAX DUE TO PAY:';
+        outcomeColor = COL.danger;
+        outcomeBg = [254, 226, 226];
+    } else if (s.diff < 0) {
+        outcomeRow = 'REFUND ELIGIBLE:';
+        outcomeColor = COL.accent;
+        outcomeBg = [219, 234, 254];
+    }
 
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
@@ -759,15 +790,14 @@ function downloadPDF() {
             ['Less: Source Tax Paid (TDS / AIT)',  '(' + tkPDF(s.tds) + ')'],
             [outcomeRow,                           s.diff !== 0 ? tkPDF(Math.abs(s.diff)) : tkPDF(0)],
         ],
-        styles:     { fontSize: 9, cellPadding: 3.5 },
+        styles: { fontSize: 9.5, cellPadding: 4 },
         columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
-        alternateRowStyles: { fillColor: [248, 249, 252] },
         didParseCell: (d) => {
             if (d.row.index === 4) {
-                d.cell.styles.fillColor = s.diff > 0 ? [255, 220, 220] : s.diff < 0 ? [215, 230, 255] : [215, 245, 225];
+                d.cell.styles.fillColor = outcomeBg;
                 d.cell.styles.fontStyle = 'bold';
-                d.cell.styles.textColor = s.diff > 0 ? [140,20,20] : s.diff < 0 ? [20,40,130] : [15,80,40];
-                d.cell.styles.fontSize  = 10;
+                d.cell.styles.textColor = outcomeColor;
+                d.cell.styles.fontSize  = 11; // Larger font for final outcome
             }
         },
     });
@@ -775,16 +805,16 @@ function downloadPDF() {
 
     if (s.minApply) {
         const locL = $('location').options[$('location').selectedIndex].text;
-        T('[!]  Minimum tax rule applied: Tk. ' + s.minTax.toLocaleString('en-IN') +
+        T('[!] Minimum tax rule applied: Tk. ' + s.minTax.toLocaleString('en-IN') +
           ' for ' + locL + ' (Section 163)',
-          ML, y + 5, { sz: 8, style: 'italic', clr: [140, 80, 10] });
+          ML, y + 5, { sz: 8.5, style: 'italic', clr: [194, 65, 12] }); // Deep orange
         y += 10;
     }
-    y += 4;
+    y += 6;
 
-    // ── 6. INVESTMENT ACTION PLAN ─────────────────────────────────────────────
-    guard(58);
-    y = secBar('6.  INVESTMENT ACTION PLAN   (Sixth Schedule, Part-B)', y);
+    // ── 8. INVESTMENT ACTION PLAN ─────────────────────────────────────────────
+    guard(65);
+    y = secBar('6. INVESTMENT ACTION PLAN (Sixth Schedule, Part-B)', y);
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
         head: [['Parameter', 'Amount (BDT)', 'Notes']],
@@ -796,64 +826,64 @@ function downloadPDF() {
             ['Additional Investment Still Needed',                            tkPDF(s.stillNd),   '** Action required'],
             ['Tax Saving by Investing Remaining Amount',                      tkPDF(s.saving),    'Immediate benefit'],
         ],
-        headStyles: { fillColor: [20, 110, 60], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [238, 252, 245] },
+        headStyles: { fillColor: [51, 65, 85], textColor: 255, fontStyle: 'bold' }, // Slate header
         columnStyles: {
-            1: { halign: 'right', fontStyle: 'bold', textColor: [15, 100, 50] },
-            2: { halign: 'left', fontSize: 8, textColor: [100, 110, 120] },
+            1: { halign: 'right', fontStyle: 'bold', textColor: COL.primary },
+            2: { halign: 'left', fontSize: 8.5, textColor: COL.secondary },
         },
         didParseCell: (d) => {
             if (d.row.index === 4) {
-                d.cell.styles.fillColor = [255, 245, 210];
+                d.cell.styles.fillColor = [254, 252, 232]; // Soft yellow alert
                 d.cell.styles.fontStyle = 'bold';
-                d.cell.styles.textColor = [130, 70, 10];
+                d.cell.styles.textColor = [161, 98, 7];
+            }
+            if (d.row.index === 5) {
+                d.cell.styles.textColor = COL.success; // Highlight saving in green
             }
         },
     });
-    y = doc.lastAutoTable.finalY + 7;
+    y = doc.lastAutoTable.finalY + 8;
 
-    // ── 7. ELIGIBLE INSTRUMENTS ───────────────────────────────────────────────
+    // ── 9. ELIGIBLE INSTRUMENTS ───────────────────────────────────────────────
     const instRows = [];
     const half = Math.ceil(TAX_CONFIG.ELIGIBLE_INSTRUMENTS.length / 2);
     for (let i = 0; i < half; i++) {
         instRows.push([
-            '- ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i],
+            '• ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i],
             i + half < TAX_CONFIG.ELIGIBLE_INSTRUMENTS.length
-                ? '- ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i + half]
+                ? '• ' + TAX_CONFIG.ELIGIBLE_INSTRUMENTS[i + half]
                 : '',
         ]);
     }
-    guard(12 + instRows.length * 7);
-    y = secBar('7.  ELIGIBLE INVESTMENT INSTRUMENTS   (Sixth Schedule, Part-B)', y);
+    guard(16 + instRows.length * 8);
+    y = secBar('7. ELIGIBLE INVESTMENT INSTRUMENTS', y);
     doc.autoTable({
         ...tblDefaults, startY: y, margin: { left: ML, right: ML },
         body: instRows,
-        styles:     { fontSize: 8.5, cellPadding: 2.5, textColor: [15, 90, 45] },
-        alternateRowStyles: { fillColor: [238, 252, 245] },
-        tableLineColor: [180, 230, 200],
-        tableLineWidth: 0.4,
+        styles: { fontSize: 8.5, cellPadding: 3, textColor: COL.secondary, lineWidth: 0 }, // No borders for this list
+        alternateRowStyles: { fillColor: [255, 255, 255] }, // Flat white
     });
-    y = doc.lastAutoTable.finalY + 5;
-
+    
     // ── FOOTER on every page ──────────────────────────────────────────────────
     const total = doc.internal.getNumberOfPages();
     for (let p = 1; p <= total; p++) {
         doc.setPage(p);
-        doc.setFillColor(245, 247, 250);
-        doc.rect(0, PH - 11, PW, 11, 'F');
-        doc.setDrawColor(200, 205, 215);
-        doc.setLineWidth(0.3);
-        doc.line(0, PH - 11, PW, PH - 11);
-        T('Auto-generated report for planning purposes only. Consult a certified tax consultant for official NBR return filing.',
-          ML, PH - 4, { sz: 6.5, clr: [140, 145, 155] });
-        T('Page ' + p + ' / ' + total, PW - ML, PH - 4, { sz: 6.5, clr: [140, 145, 155], align: 'right' });
+        
+        // Footer line separator
+        doc.setDrawColor(...COL.border);
+        doc.setLineWidth(0.5);
+        doc.line(ML, PH - 14, PW - ML, PH - 14);
+
+        T('Disclaimer: Auto-generated report for planning purposes only. Consult a certified tax professional for NBR filing.',
+          ML, PH - 8, { sz: 7, clr: COL.secondary });
+        T('Page ' + p + ' of ' + total, PW - ML, PH - 8, { sz: 8, clr: COL.secondary, align: 'right', style: 'bold' });
     }
 
-    // ── FILENAME: Generated_Tax_Report_of_Name_TIN_FY ────────────────────────
+    // ── FILENAME ──────────────────────────────────────────────────────────────
     const safeName = ($('taxpayerName').value.trim() || 'Taxpayer').replace(/\s+/g, '_');
     const safeTIN  = ($('taxpayerTIN').value.trim()  || 'NoTIN').replace(/\s+/g, '_');
     const safeFY   = TAX_CONFIG.FISCAL_YEAR.replace('-', '_');
-    doc.save('Generated_Tax_Report_of_' + safeName + '_' + safeTIN + '_FY' + safeFY + '.pdf');
+    doc.save('Tax_Report_' + safeName + '_' + safeTIN + '_FY' + safeFY + '.pdf');
 }
 
 
