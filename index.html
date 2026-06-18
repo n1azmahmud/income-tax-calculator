@@ -595,7 +595,7 @@ function downloadPDF() {
 
     // ── Brand Colors ──────────────────────────────────────────────────────────
     const COL = {
-        primary: [45, 85, 180],    // Deep Blue
+        primary: [60, 95, 155],    // Deep Blue
         secondary: [71, 85, 105],  // Slate Gray
         accent: [37, 99, 235],     // Bright Blue
         success: [16, 185, 129],   // Emerald Green
@@ -637,7 +637,7 @@ function downloadPDF() {
     y = 38;
     doc.setFillColor(...COL.lightBk);
     doc.setDrawColor(...COL.border);
-    doc.roundedRect(ML, y, CW, 20, 3, 3, 'FD'); // Soft rounded info card
+    doc.roundedRect(ML, y, CW, 20, 2, 2, 'FD'); // Soft rounded info card
 
     const name   = $('taxpayerName').value.trim() || 'N/A';
     const tin    = $('taxpayerTIN').value.trim()  || 'N/A';
